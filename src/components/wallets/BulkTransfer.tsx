@@ -91,10 +91,11 @@ export default function BulkTransfer() {
 				<TabsContent value='native'>
 					<form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
 						<div className='space-y-2'>
-							<Label>Recipients (address,amount per line)</Label>
+							<Label className='block'>Recipients (address,amount per line)</Label>
 							<Textarea
 								placeholder='0x123...,0.1&#10;0x456...,0.2'
 								rows={5}
+								className='w-full'
 								{...register('recipients')}
 							/>
 							<p className='text-sm text-gray-500'>{recipientCount} recipient(s)</p>
@@ -109,15 +110,16 @@ export default function BulkTransfer() {
 				<TabsContent value='erc20'>
 					<form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
 						<div className='space-y-2'>
-							<Label>Token Address</Label>
-							<Input placeholder='0x...' {...register('tokenAddress')} />
+							<Label className='block'>Token Address</Label>
+							<Input placeholder='0x...' className='w-full' {...register('tokenAddress')} />
 						</div>
 
 						<div className='space-y-2'>
-							<Label>Recipients (address,amount per line)</Label>
+							<Label className='block'>Recipients (address,amount per line)</Label>
 							<Textarea
 								placeholder='0x123...,100&#10;0x456...,200'
 								rows={5}
+								className='w-full'
 								{...register('recipients')}
 							/>
 							<p className='text-sm text-gray-500'>{recipientCount} recipient(s)</p>

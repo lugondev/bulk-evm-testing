@@ -13,7 +13,7 @@ export default function NetworkSelector() {
 				const network = networks.find((n) => n.id === value)
 				if (network) setSelectedNetwork(network)
 			}}>
-			<SelectTrigger className='w-[250px]'>
+			<SelectTrigger className='w-full sm:w-[250px]'>
 				<SelectValue placeholder='Select network to connect' />
 			</SelectTrigger>
 			<SelectContent>

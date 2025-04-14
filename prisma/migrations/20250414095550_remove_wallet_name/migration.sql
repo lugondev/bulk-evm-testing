@@ -2,7 +2,6 @@
 CREATE TABLE "Wallet" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "address" TEXT NOT NULL,
-    "name" TEXT,
     "privateKey" TEXT NOT NULL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL

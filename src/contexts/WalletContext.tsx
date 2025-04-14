@@ -17,7 +17,7 @@ interface WalletContextType {
 	setSelectedWallet: (wallet: Wallet | null) => void
 	refreshWallets: () => Promise<void>
 	refreshNetworks: () => Promise<void>
-	createWallet: (name?: string) => Promise<Wallet>
+	createWallet: (quantity?: number) => Promise<Wallet>
 	importWallet: (privateKey: string, name?: string) => Promise<Wallet>
 	deleteWallet: (id: string) => Promise<void>
 }
@@ -71,28 +71,13 @@ export function WalletProvider({children}: {children: React.ReactNode}) {
 		}
 	}
 
-	const createWallet = async (name?: string) => {
+	const createWallet = async (quantity?: number) => {
 		try {
-			if (!selectedNetwork) {
-				throw new Error('Please select a network first')
-			}
-			if (!provider) {
-				throw new Error('Provider not initialized')
-			}
-
-			const wallet = await api.createWallet(name)
+			const wallet = await api.createWallet(quantity ?? 1)
 			setWallets((prev) => [wallet, ...prev])
 			if (!selectedWallet) {
 				setSelectedWallet(wallet)
 			}
-			const signer = await getWalletInstance({
-				privateKey: wallet.privateKey,
-				iv: wallet.iv,
-				authTag: wallet.authTag,
-				salt: wallet.salt,
-			})
-			const connectedSigner = signer.connect(provider)
-
 			return wallet
 		} catch (error) {
 			console.error('Failed to create wallet:', error)
@@ -103,13 +88,6 @@ export function WalletProvider({children}: {children: React.ReactNode}) {
 	const importWallet = async (privateKey: string, name?: string) => {
 		// Format validation only, actual encryption happens in API
 		try {
-			if (!selectedNetwork) {
-				throw new Error('Please select a network first')
-			}
-			if (!provider) {
-				throw new Error('Provider not initialized')
-			}
-
 			// Validate private key format before sending to API
 			try {
 				const wallet = new ethers.Wallet(privateKey)

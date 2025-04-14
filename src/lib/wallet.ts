@@ -5,26 +5,16 @@ import { encryptPrivateKey, decryptPrivateKey } from './crypto'
 
 export async function createWallet() {
 	const wallet = ethers.Wallet.createRandom()
-	const encryptedData = await encryptPrivateKey(wallet.privateKey)
 	return {
 		address: wallet.address,
-		...encryptedData
+		privateKey: wallet.privateKey
 	}
 }
 
-export async function getWalletInstance(encryptedData: {
+export async function getWalletInstance(data: {
 	privateKey: string
-	iv: string
-	authTag: string
-	salt: string
 }) {
-	const privateKey = await decryptPrivateKey({
-		encrypted: encryptedData.privateKey,
-		iv: encryptedData.iv,
-		authTag: encryptedData.authTag,
-		salt: encryptedData.salt
-	})
-	return new ethers.Wallet(privateKey)
+	return new ethers.Wallet(data.privateKey)
 }
 
 const ERC20_ABI = [

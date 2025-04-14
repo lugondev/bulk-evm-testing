@@ -64,9 +64,9 @@ export const api = {
 
 	// Wallet operations
 	getWallets: () => fetchApi<Wallet[]>('/wallets'),
-	createWallet: (name?: string) => fetchApi<Wallet>('/wallets', {
+	createWallet: (quantity: number) => fetchApi<Wallet>('/wallets', {
 		method: 'POST',
-		body: JSON.stringify({ name }),
+		body: JSON.stringify({ quantity }),
 	}),
 	importWallet: (privateKey: string, name?: string) => fetchApi<Wallet>('/wallets', {
 		method: 'POST',

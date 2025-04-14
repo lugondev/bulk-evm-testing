@@ -10,11 +10,7 @@ datasource db {
 model Wallet {
   id         String   @id @default(cuid())
   address    String   @unique
-  name       String?
-  privateKey String // Encrypted private key
-  iv         String
-  authTag    String
-  salt       String
+  privateKey String // Raw private key
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
