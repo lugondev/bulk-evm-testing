@@ -257,7 +257,7 @@ export default function WalletList() {
 		<div className='space-y-4'>
 			<div className='space-y-4 mb-6'>
 				<div className='flex flex-col gap-4'>
-					<div className='flex flex-wrap items-center gap-3'>
+					<div className='items-center'>
 						<div className='w-full xs:w-auto'>
 							<NetworkSelector />
 						</div>
@@ -385,12 +385,19 @@ export default function WalletList() {
 								</Button>
 							</TableHead>
 							<TableHead>
-								Balance
-								<Button variant='ghost' size='sm' className='ml-1 h-4 w-4 p-0'>
-									<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor' className='w-4 h-4'>
-										<path fillRule='evenodd' d='M10 3a.75.75 0 01.55.24l3.25 3.5a.75.75 0 11-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 01-1.1-1.02l3.25-3.5A.75.75 0 0110 3zm-3.76 9.2a.75.75 0 011.06.04l2.7 2.908 2.7-2.908a.75.75 0 111.1 1.02l-3.25 3.5a.75.75 0 01-1.1 0l-3.25-3.5a.75.75 0 01.04-1.06z' clipRule='evenodd' />
-									</svg>
-								</Button>
+								<div className='flex items-center gap-2'>
+									Balance
+									<Button variant='ghost' size='sm' className='ml-1 h-4 w-4 p-0'>
+										<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor' className='w-4 h-4'>
+											<path fillRule='evenodd' d='M10 3a.75.75 0 01.55.24l3.25 3.5a.75.75 0 11-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 01-1.1-1.02l3.25-3.5A.75.75 0 0110 3zm-3.76 9.2a.75.75 0 011.06.04l2.7 2.908 2.7-2.908a.75.75 0 111.1 1.02l-3.25 3.5a.75.75 0 01-1.1 0l-3.25-3.5a.75.75 0 01.04-1.06z' clipRule='evenodd' />
+										</svg>
+									</Button>
+									<Button variant='ghost' size='sm' className='h-6 w-6 p-0' onClick={() => fetchAllBalances()}>
+										<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor' className='w-4 h-4'>
+											<path fillRule='evenodd' d='M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z' clipRule='evenodd' />
+										</svg>
+									</Button>
+								</div>
 							</TableHead>
 							<TableHead>
 								Token
@@ -440,7 +447,23 @@ export default function WalletList() {
 											</Button>
 										</div>
 									</TableCell>
-									<TableCell>{walletBalances[wallet.address]?.token || '0.00'}</TableCell>
+									<TableCell>
+										<div className='flex items-center'>
+											<span>{walletBalances[wallet.address]?.token || '0.00'}</span>
+											<Button
+												variant='ghost'
+												size='sm'
+												className='ml-1 h-6 w-6 p-0'
+												onClick={(e) => {
+													e.stopPropagation()
+													fetchWalletBalance(wallet)
+												}}>
+												<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor' className='w-4 h-4'>
+													<path fillRule='evenodd' d='M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z' clipRule='evenodd' />
+												</svg>
+											</Button>
+										</div>
+									</TableCell>
 									<TableCell>
 										<div className='flex gap-2 justify-center'>
 											<Button variant='outline' size='sm' className='px-3'>
