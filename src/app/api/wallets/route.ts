@@ -37,22 +37,37 @@ export async function POST(request: NextRequest) {
 				return NextResponse.json({ error: `Cannot create more than ${BULK_LIMIT} wallets at once` }, { status: 400 })
 			}
 
-			// Create multiple wallets
-			const wallets = []
-			for (let i = 0; i < quantity; i++) {
-				const walletData = await createWallet()
-				const dbWallet = await prisma.wallet.create({
-					data: walletData
-				})
 
-				wallets.push({
-					id: dbWallet.id,
-					address: dbWallet.address,
-					createdAt: dbWallet.createdAt,
-					updatedAt: dbWallet.updatedAt,
-					transactions: []
-				})
-			}
+			// Create multiple wallets
+			const walletsData = await Promise.all(
+				Array.from({ length: quantity }, () => createWallet())
+			)
+
+			await prisma.wallet.createMany({
+				data: walletsData
+			})
+
+			const createdWallets = await prisma.wallet.findMany({
+				where: {
+					address: {
+						in: walletsData.map(w => w.address)
+					}
+				},
+				include: {
+					transactions: true
+				},
+				orderBy: {
+					createdAt: 'desc'
+				}
+			})
+
+			const wallets = createdWallets.map(wallet => ({
+				id: wallet.id,
+				address: wallet.address,
+				createdAt: wallet.createdAt,
+				updatedAt: wallet.updatedAt,
+				transactions: wallet.transactions
+			}))
 
 			return NextResponse.json(wallets)
 		}
@@ -75,7 +90,10 @@ export async function POST(request: NextRequest) {
 
 		// Store in database with encrypted private key
 		const dbWallet = await prisma.wallet.create({
-			data: walletData
+			data: walletData,
+			include: {
+				transactions: true
+			}
 		})
 
 		// Return wallet data without sensitive info

@@ -24,14 +24,12 @@ export type Network = {
 export type Wallet = {
 	id: string
 	address: string
-	name?: string | null
 	privateKey: string
-	iv: string
-	authTag: string
-	salt: string
+	rpcUrlId?: string | null
 	createdAt: Date
 	updatedAt: Date
 	transactions: Transaction[]
+	rpcUrl?: RpcUrl | null
 }
 
 export type Transaction = {

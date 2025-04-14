@@ -1,36 +1,43 @@
 'use client'
 
-import {createContext, useContext, useEffect, useState} from 'react'
+import {createContext, useCallback, useContext, useEffect, useState} from 'react'
 import {ethers} from 'ethers'
 import type {Network, Wallet} from '@/types/database'
 import {api} from '@/lib/api'
 import {getWalletInstance} from '@/lib/wallet'
 
 interface WalletContextType {
-	provider: ethers.providers.JsonRpcProvider | null
+	providers: Map<string, ethers.providers.JsonRpcProvider>
 	networks: Network[]
 	selectedNetwork: Network | null
+	tokenAddress: string
+	setTokenAddress: (address: string) => void
 	setSelectedNetwork: (network: Network | null) => void
 	isConnecting: boolean
 	wallets: Wallet[]
-	selectedWallet: Wallet | null
-	setSelectedWallet: (wallet: Wallet | null) => void
+	selectedWallets: Wallet[]
+	setSelectedWallets: (wallets: Wallet[]) => void
+	toggleWalletSelection: (wallet: Wallet) => void
 	refreshWallets: () => Promise<void>
 	refreshNetworks: () => Promise<void>
 	createWallet: (quantity?: number) => Promise<Wallet>
 	importWallet: (privateKey: string, name?: string) => Promise<Wallet>
 	deleteWallet: (id: string) => Promise<void>
+	getProvider: (wallet: Wallet) => ethers.providers.JsonRpcProvider | null
 }
 
 const WalletContext = createContext<WalletContextType>({
-	provider: null,
+	providers: new Map(),
 	networks: [],
 	selectedNetwork: null,
+	tokenAddress: '',
+	setTokenAddress: () => {},
 	setSelectedNetwork: () => {},
 	isConnecting: false,
 	wallets: [],
-	selectedWallet: null,
-	setSelectedWallet: () => {},
+	selectedWallets: [],
+	setSelectedWallets: () => {},
+	toggleWalletSelection: () => {},
 	refreshWallets: async () => {},
 	refreshNetworks: async () => {},
 	createWallet: async () => {
@@ -40,15 +47,34 @@ const WalletContext = createContext<WalletContextType>({
 		throw new Error('WalletContext not initialized')
 	},
 	deleteWallet: async () => {},
+	getProvider: () => null,
 })
 
 export function WalletProvider({children}: {children: React.ReactNode}) {
-	const [provider, setProvider] = useState<ethers.providers.JsonRpcProvider | null>(null)
+	const [providers, setProviders] = useState<Map<string, ethers.providers.JsonRpcProvider>>(new Map())
 	const [networks, setNetworks] = useState<Network[]>([])
 	const [selectedNetwork, setSelectedNetwork] = useState<Network | null>(null)
+	const [tokenAddress, setTokenAddress] = useState<string>(() => {
+		const saved = localStorage.getItem('tokenAddress')
+		return saved || '0x6092390b3E3949C0140F5D6c695049b72af144D8'
+	})
+
+	useEffect(() => {
+		localStorage.setItem('tokenAddress', tokenAddress)
+	}, [tokenAddress])
 	const [isConnecting, setIsConnecting] = useState(false)
 	const [wallets, setWallets] = useState<Wallet[]>([])
-	const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null)
+	const [selectedWallets, setSelectedWallets] = useState<Wallet[]>([])
+
+	const toggleWalletSelection = (wallet: Wallet) => {
+		setSelectedWallets((prev) => {
+			const isSelected = prev.some((w) => w.id === wallet.id)
+			if (isSelected) {
+				return prev.filter((w) => w.id !== wallet.id)
+			}
+			return [...prev, wallet]
+		})
+	}
 
 	const refreshNetworks = async () => {
 		try {
@@ -75,8 +101,8 @@ export function WalletProvider({children}: {children: React.ReactNode}) {
 		try {
 			const wallet = await api.createWallet(quantity ?? 1)
 			setWallets((prev) => [wallet, ...prev])
-			if (!selectedWallet) {
-				setSelectedWallet(wallet)
+			if (selectedWallets.length === 0) {
+				setSelectedWallets([wallet])
 			}
 			return wallet
 		} catch (error) {
@@ -98,8 +124,8 @@ export function WalletProvider({children}: {children: React.ReactNode}) {
 
 			const wallet = await api.importWallet(privateKey, name)
 			setWallets((prev) => [wallet, ...prev])
-			if (!selectedWallet) {
-				setSelectedWallet(wallet)
+			if (selectedWallets.length === 0) {
+				setSelectedWallets([wallet])
 			}
 
 			return wallet
@@ -112,9 +138,7 @@ export function WalletProvider({children}: {children: React.ReactNode}) {
 	const deleteWallet = async (id: string) => {
 		try {
 			await api.deleteWallet(id)
-			if (selectedWallet?.id === id) {
-				setSelectedWallet(null)
-			}
+			setSelectedWallets((prev) => prev.filter((w) => w.id !== id))
 			setWallets((prev) => prev.filter((w) => w.id !== id))
 		} catch (error) {
 			console.error('Failed to delete wallet:', error)
@@ -127,44 +151,76 @@ export function WalletProvider({children}: {children: React.ReactNode}) {
 		refreshWallets()
 	}, [])
 
+	const getProvider = useCallback(
+		(wallet: Wallet) => {
+			if (!selectedNetwork) return null
+			if (providers.has(wallet.address)) {
+				return providers.get(wallet.address) || null
+			}
+
+			const activeRpcUrls = selectedNetwork.rpcUrls.filter((rpc) => rpc.isActive)
+			if (activeRpcUrls.length === 0) return null
+
+			const randomRpc = activeRpcUrls[Math.floor(Math.random() * activeRpcUrls.length)]
+			const newProvider = new ethers.providers.JsonRpcProvider(randomRpc.url)
+			setProviders((prev) => new Map(prev).set(wallet.address, newProvider))
+			return newProvider
+		},
+		[providers, selectedNetwork],
+	)
+
 	useEffect(() => {
-		if (selectedNetwork) {
+		if (!selectedNetwork) {
+			setProviders(new Map())
+			return
+		}
+
+		if (wallets.length > 0) {
 			setIsConnecting(true)
 			try {
-				// Randomly select an active RPC URL
 				const activeRpcUrls = selectedNetwork.rpcUrls.filter((rpc) => rpc.isActive)
 				if (activeRpcUrls.length === 0) {
-					throw new Error('No active RPC URLs available')
+					setProviders(new Map())
+					return
 				}
-				const randomRpc = activeRpcUrls[Math.floor(Math.random() * activeRpcUrls.length)]
-				const newProvider = new ethers.providers.JsonRpcProvider(randomRpc.url)
-				setProvider(newProvider)
+
+				// Create providers for all wallets
+				const newProviders = new Map<string, ethers.providers.JsonRpcProvider>()
+				wallets.forEach((wallet) => {
+					const randomRpc = activeRpcUrls[Math.floor(Math.random() * activeRpcUrls.length)]
+					newProviders.set(wallet.address, new ethers.providers.JsonRpcProvider(randomRpc.url))
+				})
+				setProviders(newProviders)
 			} catch (error) {
-				console.error('Failed to connect to network:', error)
+				console.error('Failed to initialize providers:', error)
 			} finally {
 				setIsConnecting(false)
 			}
 		} else {
-			setProvider(null)
+			setProviders(new Map())
 		}
-	}, [selectedNetwork])
+	}, [wallets, selectedNetwork])
 
 	return (
 		<WalletContext.Provider
 			value={{
-				provider,
+				providers,
 				networks,
 				selectedNetwork,
+				tokenAddress,
+				setTokenAddress,
 				setSelectedNetwork,
 				isConnecting,
 				wallets,
-				selectedWallet,
-				setSelectedWallet,
+				selectedWallets,
+				setSelectedWallets,
+				toggleWalletSelection,
 				refreshWallets,
 				refreshNetworks,
 				createWallet,
 				importWallet,
 				deleteWallet,
+				getProvider,
 			}}>
 			{children}
 		</WalletContext.Provider>
