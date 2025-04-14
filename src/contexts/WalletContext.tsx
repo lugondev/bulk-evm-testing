@@ -22,7 +22,7 @@ interface WalletContextType {
 	createWallet: (quantity?: number) => Promise<Wallet>
 	importWallet: (privateKey: string, name?: string) => Promise<Wallet>
 	deleteWallet: (id: string) => Promise<void>
-	getProvider: (wallet: Wallet) => ethers.providers.JsonRpcProvider | null
+	getProvider: (wallet?: Wallet) => ethers.providers.JsonRpcProvider | null
 }
 
 const WalletContext = createContext<WalletContextType>({
@@ -161,9 +161,9 @@ export function WalletProvider({children}: {children: React.ReactNode}) {
 	}, [])
 
 	const getProvider = useCallback(
-		(wallet: Wallet) => {
+		(wallet?: Wallet) => {
 			if (!selectedNetwork) return null
-			if (providers.has(wallet.address)) {
+			if (wallet && providers.has(wallet.address)) {
 				return providers.get(wallet.address) || null
 			}
 
@@ -172,7 +172,9 @@ export function WalletProvider({children}: {children: React.ReactNode}) {
 
 			const randomRpc = activeRpcUrls[Math.floor(Math.random() * activeRpcUrls.length)]
 			const newProvider = new ethers.providers.JsonRpcProvider(randomRpc.url)
-			setProviders((prev) => new Map(prev).set(wallet.address, newProvider))
+			if (wallet) {
+				setProviders((prev) => new Map(prev).set(wallet.address, newProvider))
+			}
 			return newProvider
 		},
 		[providers, selectedNetwork],

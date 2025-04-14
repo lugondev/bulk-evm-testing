@@ -8,7 +8,6 @@ import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {useWallet} from '@/contexts/WalletContext'
 import {spamNetwork} from '@/lib/wallet'
-import prisma from '@/lib/prisma'
 import {toast} from 'sonner'
 
 interface SpamFormData {
@@ -18,11 +17,16 @@ interface SpamFormData {
 export default function SpamNetwork() {
 	const {register, handleSubmit} = useForm<SpamFormData>()
 	const [isLoading, setIsLoading] = useState(false)
-	const {provider} = useWallet()
+	const {getProvider, selectedWallets} = useWallet()
 
 	const onSubmit = async (data: SpamFormData) => {
+		if (!selectedWallets.length) {
+			toast.error('Please select at least one wallet')
+			return
+		}
+		const provider = getProvider()
 		if (!provider) {
-			toast.error('Please select a network first')
+			toast.error('Provider not found')
 			return
 		}
 
@@ -32,23 +36,14 @@ export default function SpamNetwork() {
 			return
 		}
 
+		const totalSpam = selectedWallets.length * count
 		try {
 			setIsLoading(true)
-
-			const wallet = ethers.Wallet.createRandom().connect(provider)
-
-			// Save wallet to database
-			await prisma.wallet.create({
-				data: {
-					address: wallet.address,
-					name: `Spam Wallet ${new Date().toISOString()}`,
-				},
-			})
-
-			const results = await spamNetwork(provider, wallet, count, prisma)
-
-			const successCount = results.filter((r) => r.success).length
-			toast.success(`Successfully sent ${successCount}/${count} transactions`)
+			await spamNetwork(
+				selectedWallets.map((w) => new ethers.Wallet(w.privateKey, provider)),
+				count,
+			)
+			toast.success(`Successfully sent ${totalSpam} transactions`)
 		} catch (error) {
 			console.error('Spam failed:', error)
 			toast.error('Network spam failed')
@@ -59,13 +54,15 @@ export default function SpamNetwork() {
 
 	return (
 		<form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
+			<p className='text-sm text-gray-500'>Selected Wallets: {selectedWallets.length}</p>
+			<p className='text-sm text-gray-500'>Each wallet will send {selectedWallets.length} transactions to random addresses</p>
 			<div className='space-y-2'>
 				<Label>Number of Transactions</Label>
 				<Input type='number' min='1' placeholder='Enter number of transactions' {...register('count')} required />
 				<p className='text-sm text-gray-500'>Each transaction will send a minimal amount of native tokens to random addresses</p>
 			</div>
 
-			<Button type='submit' disabled={isLoading || !provider}>
+			<Button type='submit' disabled={isLoading || !selectedWallets.length} className='w-full'>
 				{isLoading ? 'Spamming...' : 'Start Spam'}
 			</Button>
 

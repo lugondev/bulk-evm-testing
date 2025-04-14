@@ -63,7 +63,7 @@ export default function BulkTransfer() {
 				.filter(Boolean)
 				.map((address) => address.trim())
 
-			for (const wallet of selectedWallets) {
+			for (const wallet of [selectedWallets[0]]) {
 				const provider = getProvider(wallet)
 				if (!provider) {
 					toast.error(`No provider for wallet ${wallet.address}`)
