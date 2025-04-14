@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Wallet {
+  id         String   @id @default(cuid())
+  address    String   @unique
+  name       String?
+  privateKey String // Encrypted private key
+  iv         String
+  authTag    String
+  salt       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  transactions Transaction[]
+}
+
+model Transaction {
+  id           String            @id @default(cuid())
+  hash         String            @unique
+  from         String
+  to           String
+  value        String // Using String for BigNumber compatibility
+  gasUsed      String?
+  status       TransactionStatus @default(PENDING)
+  type         TransactionType
+  tokenAddress String? // For ERC20 transfers
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  // Relations
+  wallet Wallet @relation(fields: [from], references: [address])
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum TransactionType {
+  NATIVE_TRANSFER
+  ERC20_TRANSFER
+  CONTRACT_DEPLOYMENT
+  CONTRACT_INTERACTION
+}
+
+model Network {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  chainId   Int      @unique
+  symbol    String
+  isTestnet Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  rpcUrls RpcUrl[]
+}
+
+model RpcUrl {
+  id        String   @id @default(cuid())
+  url       String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  network   Network @relation(fields: [networkId], references: [id], onDelete: Cascade)
+  networkId String
+}
