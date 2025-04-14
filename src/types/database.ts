@@ -29,7 +29,6 @@ export type Wallet = {
 	createdAt: Date
 	updatedAt: Date
 	transactions: Transaction[]
-	rpcUrl?: RpcUrl | null
 }
 
 export type Transaction = {

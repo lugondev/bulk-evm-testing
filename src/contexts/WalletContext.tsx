@@ -4,7 +4,6 @@ import {createContext, useCallback, useContext, useEffect, useState} from 'react
 import {ethers} from 'ethers'
 import type {Network, Wallet} from '@/types/database'
 import {api} from '@/lib/api'
-import {getWalletInstance} from '@/lib/wallet'
 
 interface WalletContextType {
 	providers: Map<string, ethers.providers.JsonRpcProvider>
@@ -54,13 +53,23 @@ export function WalletProvider({children}: {children: React.ReactNode}) {
 	const [providers, setProviders] = useState<Map<string, ethers.providers.JsonRpcProvider>>(new Map())
 	const [networks, setNetworks] = useState<Network[]>([])
 	const [selectedNetwork, setSelectedNetwork] = useState<Network | null>(null)
-	const [tokenAddress, setTokenAddress] = useState<string>(() => {
-		const saved = localStorage.getItem('tokenAddress')
-		return saved || '0x6092390b3E3949C0140F5D6c695049b72af144D8'
-	})
+	const [tokenAddress, setTokenAddress] = useState<string>('0x6092390b3E3949C0140F5D6c695049b72af144D8')
 
 	useEffect(() => {
-		localStorage.setItem('tokenAddress', tokenAddress)
+		try {
+			const saved = localStorage.getItem('tokenAddress')
+			if (saved) setTokenAddress(saved)
+		} catch (error) {
+			console.error('Failed to load token address from localStorage:', error)
+		}
+	}, [])
+
+	useEffect(() => {
+		try {
+			localStorage.setItem('tokenAddress', tokenAddress)
+		} catch (error) {
+			console.error('Failed to save token address to localStorage:', error)
+		}
 	}, [tokenAddress])
 	const [isConnecting, setIsConnecting] = useState(false)
 	const [wallets, setWallets] = useState<Wallet[]>([])
