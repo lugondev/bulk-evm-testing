@@ -44,5 +44,6 @@ next-env.d.ts
 # database
 prisma/dev.db
 
-#txt
+# sensitive files
+*.sensitive.ts
 wallet_nonces.txt
