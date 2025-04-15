@@ -43,3 +43,6 @@ next-env.d.ts
 
 # database
 prisma/dev.db
+
+#txt
+wallet_nonces.txt

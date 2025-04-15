@@ -130,6 +130,7 @@ export async function spamNetwork(
 	wallets: ethers.Wallet[],
 	count: number,
 ) {
+	console.log("Starting spam network...");
 	const minValue = ethers.utils.parseEther('0.00001')
 	const walletsWithNonce = await Promise.all(
 		wallets.map(async (wallet) => {
@@ -148,22 +149,19 @@ export async function spamNetwork(
 		console.log(`Elapsed time: ${elapsedTimeInSeconds} seconds`)
 		console.log(`Elapsed time: ${elapsedTime}ms`)
 		const transfers = Array(count).fill(null).map(async (_, index) => {
-			try {
-				const randomAddress = generateRandomEthAddress()
-				return wallet.sendTransaction({
-					to: randomAddress,
-					value: minValue,
-					nonce: nonce + index,
-				})
-			} catch (error) {
-				console.error('Spam transaction failed:', error)
+			const randomAddress = generateRandomEthAddress()
+			return wallet.sendTransaction({
+				to: randomAddress,
+				value: minValue,
+				nonce: nonce + index,
+			}).catch(() => {
 				return null
-			}
+			})
 		})
 		return Promise.all(transfers)
 	})
 
-	const results = await Promise.all(flatten(transfers))
+	const results = await Promise.all(transfers)
 	const endTime = Date.now()
 	const totalTime = endTime - startTime
 	const timeInSeconds = (totalTime / 1000).toFixed(2)
@@ -172,7 +170,6 @@ export async function spamNetwork(
 
 	const totalSpam = wallets.length * count
 	console.log("TPS:", (totalSpam / (totalTime / 1000)).toFixed(2));
-
 
 	return flatten(results)
 }

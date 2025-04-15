@@ -76,10 +76,10 @@ function createPieChartSVG(segments = 3) {
 export default function WalletList() {
 	const {networks, isConnecting, providers, getProvider, wallets, selectedWallets, setSelectedWallets, toggleWalletSelection, createWallet, importWallet, deleteWallet, tokenAddress, setTokenAddress} = useWallet()
 	const [isOpen, setIsOpen] = useState(false)
-	const [exportType, setExportType] = useState<'address' | 'privateKey'>('address')
+	const [exportType, setExportType] = useState<'address' | 'privateKey' | 'wallet'>('address')
 
 	const handleExport = () => {
-		const data = selectedWallets.map((wallet) => (exportType === 'address' ? wallet.address : wallet.privateKey)).join('\n')
+		const data = selectedWallets.map((wallet) => (exportType === 'address' ? wallet.address : exportType === 'privateKey' ? wallet.privateKey : `${wallet.address}|${wallet.privateKey}`)).join('\n')
 
 		const blob = new Blob([data], {type: 'text/plain'})
 		const url = URL.createObjectURL(blob)
@@ -279,9 +279,10 @@ export default function WalletList() {
 					<h2 className='text-xl font-semibold'>My Wallets</h2>
 					{selectedWallets.length > 0 && (
 						<div className='flex items-center gap-2'>
-							<select value={exportType} onChange={(e) => setExportType(e.target.value as 'address' | 'privateKey')} className='h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors'>
+							<select value={exportType} onChange={(e) => setExportType(e.target.value as 'address' | 'privateKey' | 'wallet')} className='h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors'>
 								<option value='address'>Address</option>
 								<option value='privateKey'>Private Key</option>
+								<option value='wallet'>Address|Private Key</option>
 							</select>
 							<Button onClick={handleExport} size='sm'>
 								Export Selected
