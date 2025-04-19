@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
 	try {
 		const body = await request.json()
 		const { url } = body
+		const networkId = (await params).id
 
 		const rpcUrl = await prisma.rpcUrl.create({
 			data: {
 				url,
 				isActive: true,
-				networkId: params.id
+				networkId
 			}
 		})
 

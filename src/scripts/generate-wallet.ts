@@ -1,4 +1,5 @@
 import { ethers } from "ethers"
+import * as fs from "fs"
 
 function generateWallets(amount: number) {
 	// Generate a random wallet
@@ -15,12 +16,18 @@ function generateWallets(amount: number) {
 }
 
 function main() {
-	console.log("Generating wallets...");
-	const wallets = generateWallets(100)
+	console.log("Generating wallets...")
+	const wallets = generateWallets(3000)
+
+	// Create filename with timestamp
+	const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+	const filename = `wallets-${timestamp}.txt`
+
+	// Write wallet info to file
 	wallets.forEach((wallet) => {
-		console.log(`${wallet.address}|${wallet.privateKey}`)
+		// const walletInfo = `Address: ${wallet.address}\nPrivate Key: ${wallet.privateKey}\nMnemonic: ${wallet.mnemonic}\n\n`
+		fs.appendFileSync(filename, wallet.privateKey + "\n")
 	})
 }
 
 main()
-
